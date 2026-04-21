@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="28" width="108" height="90" rx="10" ry="10" stroke="currentColor" stroke-width="7" fill="none"/>
+          <rect x="10" y="28" width="108" height="28" rx="10" ry="10" fill="currentColor"/>
+          <rect x="10" y="46" width="108" height="10" fill="currentColor"/>
+          <rect x="36" y="14" width="8" height="26" rx="4" fill="currentColor"/>
+          <rect x="84" y="14" width="8" height="26" rx="4" fill="currentColor"/>
+          <text x="64" y="102" font-family="system-ui, sans-serif" font-weight="800" font-size="52" fill="currentColor" text-anchor="middle">M</text>
+        </svg>
+      </div>
+      <div class="title">
+        <h1>Monday First</h1>
+        <p class="subtitle">for GitHub</p>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label" id="toggleLabel">Start week on Monday</span>
+      <label class="toggle">
+        <input type="checkbox" id="enableToggle" checked>
+        <span class="toggle-track">
+          <span class="toggle-thumb"></span>
+        </span>
+      </label>
+    </div>
+
+    <div class="status" id="status">
+      <span class="status-dot"></span>
+      <span class="status-text">Active on GitHub</span>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
