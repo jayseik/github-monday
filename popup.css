@@ -1,0 +1,181 @@
+/* Monday First for GitHub - Popup Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #ffffff;
+  --bg-secondary: #f6f8fa;
+  --text-primary: #1f2328;
+  --text-secondary: #656d76;
+  --border: #d1d9e0;
+  --accent: #1f2328;
+  --accent-text: #ffffff;
+  --toggle-bg: #d1d9e0;
+  --toggle-bg-active: #1f2328;
+  --toggle-thumb: #ffffff;
+  --status-dot: #1a7f37;
+  --status-dot-inactive: #d1d9e0;
+  --shadow: rgba(31, 35, 40, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161b22;
+    --bg-secondary: #0d1117;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --border: #30363d;
+    --accent: #e6edf3;
+    --accent-text: #0d1117;
+    --toggle-bg: #30363d;
+    --toggle-bg-active: #e6edf3;
+    --toggle-thumb: #0d1117;
+    --status-dot: #3fb950;
+    --status-dot-inactive: #30363d;
+    --shadow: rgba(0, 0, 0, 0.2);
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  width: 300px;
+  padding: 20px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  flex-shrink: 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title h1 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Toggle row */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.toggle-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+/* Custom toggle switch */
+.toggle {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  display: block;
+  width: 44px;
+  height: 24px;
+  background: var(--toggle-bg);
+  border-radius: 12px;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: var(--toggle-thumb);
+  border-radius: 50%;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px var(--shadow);
+}
+
+.toggle input:checked + .toggle-track {
+  background: var(--toggle-bg-active);
+}
+
+.toggle input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(20px);
+}
+
+.toggle input:focus-visible + .toggle-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Status indicator */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-dot);
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.status.inactive .status-dot {
+  background: var(--status-dot-inactive);
+}
+
+.status-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
