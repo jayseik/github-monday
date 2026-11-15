@@ -68,7 +68,7 @@ The extension:
 
 ## Known limitations
 
-- **The leftmost Sunday cell is hidden.** When every Sunday shifts one column to the left, the first Sunday in the calendar has nowhere to go — it would land off-screen. This is one day out of ~365 being visually hidden at the far-left edge of the graph. The underlying data is untouched; it just isn't drawn.
+- **A Sunday in the calendar's first column is hidden.** Every Sunday shifts one column to the left to close the previous Monday–Sunday week, so a Sunday in the very first column has no week to join — it would land on the weekday labels. Whether that happens depends on the weekday the calendar starts on: year views that start mid-week (e.g. 2025, which starts on a Wednesday) lose nothing. At most one day is hidden, and the underlying data is untouched; it just isn't drawn.
 - **Only `github.com`.** GitHub Enterprise (`ghe.com` and self-hosted instances) isn't matched by the manifest. If you need it there, add the host to `manifest.json` and reload.
 - **Profile pages only.** The extension targets the contribution calendar; it doesn't touch other calendars on the site.
 

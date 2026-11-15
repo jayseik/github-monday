@@ -84,10 +84,22 @@
     // Calculate column width from adjacent Sunday data cells
     const sundayCells = Array.from(sundayRow.querySelectorAll('td[data-date]'));
     let colWidth = 0;
+    let firstSundayInFirstColumn = false;
     if (sundayCells.length >= 2) {
       const cRect0 = sundayCells[0].getBoundingClientRect();
       const cRect1 = sundayCells[1].getBoundingClientRect();
       colWidth = cRect1.left - cRect0.left;
+
+      // The calendar's first column is where the leftmost day of any weekday
+      // sits. When the calendar starts mid-week (e.g. a year view where Jan 1
+      // is a Wednesday), the Sunday slot of that column is an empty
+      // placeholder and the first real Sunday sits one column further right.
+      const firstColumnLeft = Math.min(
+        ...dayRows.map(
+          (row) => row.querySelector('[data-date]').getBoundingClientRect().left
+        )
+      );
+      firstSundayInFirstColumn = cRect0.left - firstColumnLeft < colWidth / 2;
     }
 
     const sundayIndex = dayRows.indexOf(sundayRow);
@@ -108,13 +120,14 @@
     // Sunday cells also shift LEFT by one column so each Sunday
     // joins the previous week (Mon-first weeks end on Sunday)
     if (colWidth > 0) {
-      sundayCells.forEach((cell, i) => {
+      sundayCells.forEach((cell) => {
         cell.style.transform = `translateX(${-colWidth}px)`;
-        if (i === 0) {
-          // First Sunday cell shifts off-screen — hide it
-          cell.style.visibility = 'hidden';
-        }
       });
+      // A Sunday in the first column has no earlier week to join (it would
+      // land on the weekday labels), so hide it
+      if (firstSundayInFirstColumn) {
+        sundayCells[0].style.visibility = 'hidden';
+      }
     }
 
     table.setAttribute(MARKER, 'true');
