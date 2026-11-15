@@ -41,7 +41,8 @@ chrome.tabs.onActivated.addListener(({ tabId }) => {
 // Update all GitHub tabs when enabled state changes
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'sync' && changes.enabled) {
-    const newEnabled = changes.enabled.newValue;
+    // A removed key means the default (enabled), same as in content.js
+    const newEnabled = changes.enabled.newValue !== false;
     chrome.tabs.query({ url: 'https://github.com/*' }, (tabs) => {
       tabs.forEach((tab) => {
         chrome.action.setBadgeText({
@@ -51,4 +52,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
       });
     });
   }
+});
+
+// Installing or updating the extension resets its badges, so restore them on
+// GitHub tabs that are already open (otherwise they stay blank until the tab
+// navigates or is switched to)
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.tabs.query({ url: 'https://github.com/*' }, (tabs) => {
+    tabs.forEach((tab) => updateBadge(tab.id, tab.url));
+  });
 });

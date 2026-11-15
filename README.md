@@ -26,14 +26,14 @@ Profile pages reorder automatically. Tooltips, hover states, and colors are unto
 ## Features
 
 - Reorders the contribution heatmap on every GitHub profile
-- Works across GitHub's Turbo (SPA) navigation
+- Works across GitHub's Turbo (SPA) navigation and when switching years, without flashing the Sunday-first layout first
 - Preserves tooltips, hover states, streaks, and totals
-- Simple on/off toggle in the popup (state persists across browsers via `chrome.storage.sync`)
+- Simple on/off toggle in the popup that applies to every open GitHub tab at once (state persists across browsers via `chrome.storage.sync`)
 - "M" badge on the toolbar icon when active on a GitHub tab
 - Dark mode popup
 - No data collection, no tracking, no network requests
 - Entirely client-side — only touches DOM in your browser
-- Under 15 KB total
+- About 20 KB total, icons included
 
 ## Installation
 
@@ -48,6 +48,12 @@ Profile pages reorder automatically. Tooltips, hover states, and colors are unto
 4. Click **Load unpacked** and select the cloned directory.
 5. Navigate to any GitHub profile — the calendar now starts on Monday.
 
+To update later, run `git pull` and click the reload icon on the extension's card in `chrome://extensions/`.
+
+### From a release zip
+
+Download the zip from the [latest release](https://github.com/jayseik/github-monday/releases/latest), unzip it, and follow steps 2–5 above, selecting the unzipped folder.
+
 ### Chrome Web Store
 
 Not yet published.
@@ -58,7 +64,7 @@ GitHub renders the contribution calendar as a `<table>` of seven rows (one row p
 
 The extension:
 
-1. Locates the calendar table on GitHub profile pages, and again after every Turbo navigation via a `MutationObserver`.
+1. Locates the calendar table on GitHub profile pages, and again whenever GitHub swaps in a new one (Turbo navigation, switching years) via a `MutationObserver`, before the browser paints it.
 2. Detects the Sunday row by checking actual `data-date` values (no reliance on row position).
 3. Uses CSS transforms (no DOM mutation) to:
    - shift the Sunday row to the bottom,
@@ -66,11 +72,9 @@ The extension:
    - shift every Sunday cell left by one column so each Sunday joins the end of the previous week.
 4. Reverts cleanly when toggled off — every change is a CSS transform that can be cleared.
 
-There's also a fallback code path for GitHub's legacy SVG calendar, which you'd only hit on very old cached pages.
-
 ## Known limitations
 
-- **The leftmost Sunday cell is hidden.** When every Sunday shifts one column to the left, the first Sunday in the calendar has nowhere to go — it would land off-screen. This is one day out of ~365 being visually hidden at the far-left edge of the graph. The underlying data is untouched; it just isn't drawn.
+- **A Sunday in the calendar's first column is hidden.** Every Sunday shifts one column to the left to close the previous Monday–Sunday week, so a Sunday in the very first column has no week to join — it would land on the weekday labels. Whether that happens depends on the weekday the calendar starts on: year views that start mid-week (e.g. 2025, which starts on a Wednesday) lose nothing. At most one day is hidden, and the underlying data is untouched; it just isn't drawn.
 - **Only `github.com`.** GitHub Enterprise (`ghe.com` and self-hosted instances) isn't matched by the manifest. If you need it there, add the host to `manifest.json` and reload.
 - **Profile pages only.** The extension targets the contribution calendar; it doesn't touch other calendars on the site.
 
