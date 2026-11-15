@@ -34,6 +34,11 @@
   function setEnabled(value) {
     // A removed key (e.g. storage cleared) means the default: enabled
     enabled = value !== false;
+    applyState();
+  }
+
+  // Bring every calendar on the page in line with the current setting
+  function applyState() {
     if (enabled) {
       shiftAllCalendars();
     } else {
@@ -175,31 +180,48 @@
 
   // --- Initialization and observation ---
 
-  const debouncedShift = debounce(shiftAllCalendars, 150);
+  const debouncedApply = debounce(applyState, 150);
 
   // Initial run (calendar might already be in DOM)
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', shiftAllCalendars);
+    document.addEventListener('DOMContentLoaded', applyState);
   } else {
-    shiftAllCalendars();
+    applyState();
   }
 
-  // Handle GitHub's Turbo SPA navigation
-  document.addEventListener('turbo:load', shiftAllCalendars);
-  document.addEventListener('turbo:render', shiftAllCalendars);
+  // Handle GitHub's Turbo SPA navigation. Going back restores a cached
+  // snapshot of the page, which still carries the shift from when it was
+  // cached, so this must also revert if the toggle was turned off since.
+  document.addEventListener('turbo:load', applyState);
+  document.addEventListener('turbo:render', applyState);
 
-  // MutationObserver for dynamically loaded content
+  function containsCalendar(node) {
+    return (
+      node.nodeType === Node.ELEMENT_NODE &&
+      (node.matches(CALENDAR_SELECTOR) ||
+        node.querySelector(CALENDAR_SELECTOR) !== null)
+    );
+  }
+
+  // MutationObserver for dynamically loaded content. Switching years on a
+  // profile swaps in a new calendar with no Turbo event; observer callbacks
+  // run before the next paint, so handling it right away means the
+  // Sunday-first layout never flashes on screen.
   const observer = new MutationObserver((mutations) => {
-    // Quick check: only run if mutations might contain calendar elements
     let hasNewNodes = false;
     for (const mutation of mutations) {
-      if (mutation.addedNodes.length > 0) {
+      for (const node of mutation.addedNodes) {
+        if (containsCalendar(node)) {
+          applyState();
+          return;
+        }
         hasNewNodes = true;
-        break;
       }
     }
+    // Catch-all retry for anything else (e.g. a calendar that had no layout
+    // yet when it was inserted)
     if (hasNewNodes) {
-      debouncedShift();
+      debouncedApply();
     }
   });
 
