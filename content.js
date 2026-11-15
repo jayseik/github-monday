@@ -208,24 +208,19 @@
   // run before the next paint, so handling it right away means the
   // Sunday-first layout never flashes on screen.
   const observer = new MutationObserver((mutations) => {
-    let hasNewNodes = false;
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        if (containsCalendar(node)) {
-          applyState();
-          return;
-        }
-        hasNewNodes = true;
-      }
+    const added = mutations.flatMap((mutation) => Array.from(mutation.addedNodes));
+    if (added.length === 0) return;
+    if (added.some(containsCalendar)) {
+      applyState();
     }
-    // Catch-all retry for anything else (e.g. a calendar that had no layout
-    // yet when it was inserted)
-    if (hasNewNodes) {
-      debouncedApply();
-    }
+    // Catch-all retry (e.g. for a calendar that had no layout yet when it
+    // was inserted)
+    debouncedApply();
   });
 
-  observer.observe(document.body, {
+  // Observe <html>, not <body>: Turbo navigation replaces the <body> element,
+  // which would leave an observer on the old one watching a detached tree.
+  observer.observe(document.documentElement, {
     childList: true,
     subtree: true,
   });
