@@ -26,14 +26,14 @@ Profile pages reorder automatically. Tooltips, hover states, and colors are unto
 ## Features
 
 - Reorders the contribution heatmap on every GitHub profile
-- Works across GitHub's Turbo (SPA) navigation
+- Works across GitHub's Turbo (SPA) navigation and when switching years, without flashing the Sunday-first layout first
 - Preserves tooltips, hover states, streaks, and totals
-- Simple on/off toggle in the popup (state persists across browsers via `chrome.storage.sync`)
+- Simple on/off toggle in the popup that applies to every open GitHub tab at once (state persists across browsers via `chrome.storage.sync`)
 - "M" badge on the toolbar icon when active on a GitHub tab
 - Dark mode popup
 - No data collection, no tracking, no network requests
 - Entirely client-side — only touches DOM in your browser
-- Under 15 KB total
+- About 20 KB total, icons included
 
 ## Installation
 
@@ -48,6 +48,12 @@ Profile pages reorder automatically. Tooltips, hover states, and colors are unto
 4. Click **Load unpacked** and select the cloned directory.
 5. Navigate to any GitHub profile — the calendar now starts on Monday.
 
+To update later, run `git pull` and click the reload icon on the extension's card in `chrome://extensions/`.
+
+### From a release zip
+
+Download the zip from the [latest release](https://github.com/jayseik/github-monday/releases/latest), unzip it, and follow steps 2–5 above, selecting the unzipped folder.
+
 ### Chrome Web Store
 
 Not yet published.
@@ -58,7 +64,7 @@ GitHub renders the contribution calendar as a `<table>` of seven rows (one row p
 
 The extension:
 
-1. Locates the calendar table on GitHub profile pages, and again after every Turbo navigation via a `MutationObserver`.
+1. Locates the calendar table on GitHub profile pages, and again whenever GitHub swaps in a new one (Turbo navigation, switching years) via a `MutationObserver`, before the browser paints it.
 2. Detects the Sunday row by checking actual `data-date` values (no reliance on row position).
 3. Uses CSS transforms (no DOM mutation) to:
    - shift the Sunday row to the bottom,
