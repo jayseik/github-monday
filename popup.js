@@ -15,30 +15,28 @@ document.addEventListener('DOMContentLoaded', () => {
   toggle.addEventListener('change', () => {
     const enabled = toggle.checked;
 
-    // Save to storage
-    chrome.storage.sync.set({ enabled });
-
     // Update popup UI
     updateStatusUI(enabled);
 
-    // Notify the active tab's content script. Badge updates for all GitHub
-    // tabs are handled by the storage.onChanged listener in background.js.
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0] && tabs[0].url && tabs[0].url.includes('github.com')) {
-        chrome.tabs.sendMessage(
-          tabs[0].id,
-          { type: 'toggle', enabled },
-          () => {
-            // Ignore errors if content script not ready
-            if (chrome.runtime.lastError) {
-              // Content script not loaded - reload the tab to apply
-              chrome.tabs.reload(tabs[0].id);
-            }
-          }
-        );
-      }
-    });
+    // Saving is all it takes: the content script in every GitHub tab and the
+    // badge logic in background.js both listen for this storage change.
+    chrome.storage.sync.set({ enabled }, reloadActiveTabIfStale);
   });
+
+  // A GitHub tab opened before the extension was installed or updated has no
+  // live content script to receive the change. If that's the tab the user is
+  // looking at, reload it so the toggle visibly takes effect.
+  function reloadActiveTabIfStale() {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
+      if (!tab || !tab.url || !tab.url.includes('github.com')) return;
+      chrome.tabs.sendMessage(tab.id, { type: 'ping' }, () => {
+        if (chrome.runtime.lastError) {
+          chrome.tabs.reload(tab.id);
+        }
+      });
+    });
+  }
 
   function updateStatusUI(enabled) {
     if (enabled) {

@@ -12,29 +12,34 @@
   // already run with the default `enabled=true`; if storage says disabled,
   // revert what we just did.
   chrome.storage.sync.get({ enabled: true }, (data) => {
-    enabled = data.enabled;
+    setEnabled(data.enabled);
+  });
+
+  // The popup toggle only writes to storage, so every open GitHub tab (not
+  // just the active one) picks up the change here.
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'sync' && changes.enabled) {
+      setEnabled(changes.enabled.newValue);
+    }
+  });
+
+  // The popup pings the active tab to check this script is alive. It isn't in
+  // tabs opened before the extension was installed or updated.
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.type === 'ping') {
+      sendResponse({ ok: true });
+    }
+  });
+
+  function setEnabled(value) {
+    // A removed key (e.g. storage cleared) means the default: enabled
+    enabled = value !== false;
     if (enabled) {
       shiftAllCalendars();
     } else {
       revertAllCalendars();
     }
-  });
-
-  // Listen for toggle messages from popup
-  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (msg.type === 'toggle') {
-      enabled = msg.enabled;
-      if (enabled) {
-        shiftAllCalendars();
-      } else {
-        revertAllCalendars();
-      }
-      sendResponse({ ok: true });
-    }
-    if (msg.type === 'getStatus') {
-      sendResponse({ enabled });
-    }
-  });
+  }
 
   // --- Calendar layout ---
   // GitHub renders the calendar as a <table>: one row per weekday (Sunday
