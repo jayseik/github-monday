@@ -66,8 +66,6 @@ The extension:
    - shift every Sunday cell left by one column so each Sunday joins the end of the previous week.
 4. Reverts cleanly when toggled off — every change is a CSS transform that can be cleared.
 
-There's also a fallback code path for GitHub's legacy SVG calendar, which you'd only hit on very old cached pages.
-
 ## Known limitations
 
 - **The leftmost Sunday cell is hidden.** When every Sunday shifts one column to the left, the first Sunday in the calendar has nowhere to go — it would land off-screen. This is one day out of ~365 being visually hidden at the far-left edge of the graph. The underlying data is untouched; it just isn't drawn.

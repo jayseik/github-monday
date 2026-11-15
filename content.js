@@ -5,6 +5,7 @@
   'use strict';
 
   const MARKER = 'data-monday-first';
+  const CALENDAR_SELECTOR = 'table.ContributionCalendar-grid';
   let enabled = true;
 
   // Load enabled state from storage. The synchronous shift below may have
@@ -35,7 +36,9 @@
     }
   });
 
-  // --- Table-based calendar (current GitHub layout, 2024+) ---
+  // --- Calendar layout ---
+  // GitHub renders the calendar as a <table>: one row per weekday (Sunday
+  // first), one column per week, each day cell carrying a data-date.
 
   function getDayRows(tbody) {
     // Filter to only actual day rows (skip spacer/header rows)
@@ -131,183 +134,15 @@
     table.removeAttribute(MARKER);
   }
 
-  // --- SVG-based calendar (legacy GitHub layout) ---
-
-  function getSvgRects(svg) {
-    let rects = svg.querySelectorAll('rect.ContributionCalendar-day');
-    if (rects.length === 0) rects = svg.querySelectorAll('rect.day');
-    return Array.from(rects);
-  }
-
-  function findSundayYPosition(rects) {
-    // Find a rect with a Sunday date and return its y-position
-    for (const rect of rects) {
-      const dateStr = rect.getAttribute('data-date');
-      if (!dateStr) continue;
-      const date = new Date(dateStr + 'T12:00:00');
-      if (date.getDay() === 0) {
-        return parseFloat(rect.getAttribute('y'));
-      }
-    }
-    return null;
-  }
-
-  function shiftSvgCalendar(svg) {
-    if (svg.hasAttribute(MARKER)) return;
-
-    const rects = getSvgRects(svg);
-    if (rects.length < 14) return; // Need at least 2 weeks of data
-
-    // Get all unique y-positions (row positions)
-    const ySet = new Set(rects.map((r) => parseFloat(r.getAttribute('y'))));
-    const yPositions = Array.from(ySet).sort((a, b) => a - b);
-    if (yPositions.length < 7) return;
-
-    const rowHeight = yPositions[1] - yPositions[0];
-    const minY = yPositions[0];
-    const maxY = yPositions[yPositions.length - 1];
-
-    // Get column width from unique x-positions
-    const xSet = new Set(rects.map((r) => parseFloat(r.getAttribute('x'))));
-    const xPositions = Array.from(xSet).sort((a, b) => a - b);
-    const colWidth = xPositions.length >= 2 ? xPositions[1] - xPositions[0] : 0;
-    const minX = xPositions[0];
-
-    // Find Sunday's y-position by checking actual dates
-    const sundayY = findSundayYPosition(rects);
-    if (sundayY === null) return;
-
-    // Store original positions and shift all rects
-    rects.forEach((rect) => {
-      rect.setAttribute('data-orig-x', rect.getAttribute('x'));
-      rect.setAttribute('data-orig-y', rect.getAttribute('y'));
-
-      const currentY = parseFloat(rect.getAttribute('y'));
-      const currentX = parseFloat(rect.getAttribute('x'));
-      let newY;
-
-      if (Math.abs(currentY - sundayY) < 1) {
-        // Sunday row -> move to bottom AND shift left one column
-        newY = maxY;
-        if (colWidth > 0) {
-          const newX = currentX - colWidth;
-          rect.setAttribute('x', newX);
-          if (newX < minX) {
-            // First Sunday rect shifts off-screen — hide it
-            rect.setAttribute('visibility', 'hidden');
-          }
-        }
-      } else if (currentY > sundayY) {
-        // Rows below Sunday -> shift up by one
-        newY = currentY - rowHeight;
-      } else {
-        // Rows above Sunday -> stay (shouldn't exist if Sunday is first)
-        newY = currentY;
-      }
-      rect.setAttribute('y', newY);
-    });
-
-    // Update day-of-week text labels
-    shiftSvgDayLabels(svg, rowHeight, sundayY, maxY);
-
-    svg.setAttribute(MARKER, 'true');
-  }
-
-  function shiftSvgDayLabels(svg, rowHeight, sundayY, maxY) {
-    let textElements = svg.querySelectorAll('text.ContributionCalendar-label');
-    if (textElements.length === 0) {
-      textElements = svg.querySelectorAll('text.wday');
-    }
-    if (textElements.length === 0) return;
-
-    const dayLabels = Array.from(textElements).filter((t) => {
-      const content = t.textContent.trim().toLowerCase();
-      return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].some((d) =>
-        content.startsWith(d)
-      );
-    });
-
-    dayLabels.forEach((label) => {
-      const attr = label.hasAttribute('y') ? 'y' : 'dy';
-      const currentY = parseFloat(label.getAttribute(attr));
-      if (isNaN(currentY)) return;
-
-      // Store original position for revert
-      label.setAttribute('data-orig-attr', attr);
-      label.setAttribute('data-orig-val', currentY);
-
-      let newY;
-      if (Math.abs(currentY - sundayY) < rowHeight) {
-        // Sunday label -> move to bottom (no horizontal shift for labels)
-        newY = currentY + (maxY - sundayY);
-      } else if (currentY > sundayY) {
-        // Labels below Sunday -> shift up by one row
-        newY = currentY - rowHeight;
-      } else {
-        newY = currentY;
-      }
-
-      label.setAttribute(attr, newY);
-    });
-  }
-
-  function revertSvgCalendar(svg) {
-    if (!svg.hasAttribute(MARKER)) return;
-
-    // Restore original rect positions
-    const rects = getSvgRects(svg);
-    rects.forEach((rect) => {
-      const origX = rect.getAttribute('data-orig-x');
-      const origY = rect.getAttribute('data-orig-y');
-      if (origY !== null) rect.setAttribute('y', origY);
-      if (origX !== null) rect.setAttribute('x', origX);
-      rect.removeAttribute('data-orig-x');
-      rect.removeAttribute('data-orig-y');
-      rect.removeAttribute('visibility');
-    });
-
-    // Restore original day label positions
-    let textElements = svg.querySelectorAll('text.ContributionCalendar-label');
-    if (textElements.length === 0) {
-      textElements = svg.querySelectorAll('text.wday');
-    }
-    Array.from(textElements).forEach((label) => {
-      const attr = label.getAttribute('data-orig-attr');
-      const val = label.getAttribute('data-orig-val');
-      if (attr && val !== null) {
-        label.setAttribute(attr, val);
-      }
-      label.removeAttribute('data-orig-attr');
-      label.removeAttribute('data-orig-val');
-    });
-
-    svg.removeAttribute(MARKER);
-  }
-
   // --- Main orchestration ---
 
   function shiftAllCalendars() {
     if (!enabled) return;
-
-    // Strategy 1: Table-based (current)
-    document
-      .querySelectorAll('table.ContributionCalendar-grid')
-      .forEach(shiftTableCalendar);
-
-    // Strategy 2: SVG-based (legacy)
-    document
-      .querySelectorAll('svg.js-calendar-graph-svg')
-      .forEach(shiftSvgCalendar);
+    document.querySelectorAll(CALENDAR_SELECTOR).forEach(shiftTableCalendar);
   }
 
   function revertAllCalendars() {
-    document
-      .querySelectorAll('table.ContributionCalendar-grid')
-      .forEach(revertTableCalendar);
-
-    document
-      .querySelectorAll('svg.js-calendar-graph-svg')
-      .forEach(revertSvgCalendar);
+    document.querySelectorAll(CALENDAR_SELECTOR).forEach(revertTableCalendar);
   }
 
   // --- Debounce utility ---
@@ -334,9 +169,6 @@
   // Handle GitHub's Turbo SPA navigation
   document.addEventListener('turbo:load', shiftAllCalendars);
   document.addEventListener('turbo:render', shiftAllCalendars);
-
-  // Legacy Turbolinks support (just in case)
-  document.addEventListener('turbolinks:load', shiftAllCalendars);
 
   // MutationObserver for dynamically loaded content
   const observer = new MutationObserver((mutations) => {
